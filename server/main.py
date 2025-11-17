@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from pymongo.mongo_client import MongoClient
 from contextlib import asynccontextmanager
 
+from .router import analyze
+
 import os
 
 load_dotenv()
@@ -13,6 +15,8 @@ mongo_client = MongoClient(MONGODB_URL)
 database = mongo_client.get_database("sample_mflix")
 
 app = FastAPI()
+
+app.include_router(analyze.router)
 
 @asynccontextmanager
 async def lifespan():
