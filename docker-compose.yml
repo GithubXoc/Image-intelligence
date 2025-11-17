@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
-    command: ["poetry", "run", "uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["poetry", "run", "uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   # database:
   #   image: postgres:18-alpine
