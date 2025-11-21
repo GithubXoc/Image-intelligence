@@ -1,35 +1,14 @@
-import * as cdk from "aws-cdk-lib/core";
+import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import * as lambda from "aws-cdk-lib/aws-lambda";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { S3bucket } from "./construct/S3bucket";
+import { FirstLambda } from "./construct/firstLambda";
 
 export class InfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const FirstLambdaFunction = new lambda.Function(
-      this,
-      "FirstLambdaFunction",
-      {
-        runtime: lambda.Runtime.PYTHON_3_13,
-        handler: "index.handler",
-        code: lambda.Code.fromInline("def handler(event, context):\n    return 'Hello, World!'"),
-      }
-    );
+    new FirstLambda(this, "FirstLambdaConstruct");
 
-    const FirstLambdaFunctionUrl = FirstLambdaFunction.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.NONE,
-    });
-
-    new cdk.CfnOutput(this, "FirstLambdaFunctionUrlOutput", {
-      value: FirstLambdaFunctionUrl.url,
-    });
-
-    // The code that defines your stack goes here
-
-    // example resource
-    // const queue = new sqs.Queue(this, 'InfraQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    const s3bucket = new S3bucket(this, "S3bucketConstruct");
   }
 }
