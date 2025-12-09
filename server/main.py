@@ -1,22 +1,18 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from pymongo.mongo_client import MongoClient
 from contextlib import asynccontextmanager
+
+from server.db.mongo import get_mongo_client
 
 from .router import analyze
 
-import os
-
 load_dotenv()
-
-MONGODB_URL = os.getenv("MONGODB_URL")
-mongo_client = MongoClient(MONGODB_URL)
-# db = os.getenv("DATABASE_NAME", "IntellegentImage")
-database = mongo_client.get_database("sample_mflix")
 
 app = FastAPI()
 
 app.include_router(analyze.router)
+
+mongo_client = get_mongo_client()
 
 @asynccontextmanager
 async def lifespan():
@@ -36,8 +32,8 @@ def read_root():
 
 @app.get("/movies")
 def get_movies():
-    movies_collection = database.get_collection("movies")
-    movies = list(movies_collection.find().limit(10))  # Limit to 10 movies for brevity
+    movies_collection = mongo_client.get_collection("movies")
+    movies = list(movies_collection.find().limit(10))
     for movie in movies:
-        movie["_id"] = str(movie["_id"])  # Convert ObjectId to string for JSON serialization
+        movie["_id"] = str(movie["_id"])
     return movies

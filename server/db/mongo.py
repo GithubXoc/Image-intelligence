@@ -1,25 +1,38 @@
 
+from functools import lru_cache
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+from types import SimpleNamespace
+
 import os
 
-uri = os.getenv("MONGODB_URL")
+MONGODB_URL = os.getenv("MONGODB_URL")
 
-# Create a new client and connect to the server
-client = MongoClient(uri)
+MONGO_DB_COLLECTIONS = SimpleNamespace(
+    IMAGE_ANALYSES="image_analyses",
+    USER="user_collection"
+)
 
 class MongoDB:
-    def __init__(self):
-        self.db = client['IntellegentImage']
-        self.users_collection = self.db['users']
-        self.images_collection = self.db['images']
+    def __init__(self, connection_string: str = MONGODB_URL):
+        self.client = MongoClient(connection_string)
+        # self.users_collection = self.db['users']
+        # self.images_collection = self.db['images']
+        self.movies_db = self.client.get_database("sample_mflix")
+        print(f"Connected to database: sample_mflix")
     
-    def get_users_collection(self):
-        return self.users_collection
-
-# Send a ping to confirm a successful connection
-try:
-    client.admin.command('ping')
-    print("Pinged your deployment. You successfully connected to MongoDB!")
-except Exception as e:
-    print(e)
+    def get_collection(self, collection_name: str):
+        return self.movies_db.get_collection(collection_name)
+    
+    def write_collection(self, collection_name: str, data: dict):
+        collection = self.movies_db.get_collection(collection_name)
+        result = collection.insert_one(data)
+        return result.inserted_id
+    
+    def close_connection(self):
+        self.client.close()
+        print("MongoDB connection closed.")
+        
+@lru_cache()
+def get_mongo_client():
+    return MongoDB()
