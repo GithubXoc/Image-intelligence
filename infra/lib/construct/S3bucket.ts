@@ -9,6 +9,7 @@ export class S3bucket extends Construct {
     super(scope, id);
 
     const bucket = new s3.Bucket(this, "ImageIntelligence", {
+      bucketName: "imageintelligence",
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
@@ -17,6 +18,7 @@ export class S3bucket extends Construct {
     this.bucketName = bucket.bucketName;
 
     const frontendBucket = new s3.Bucket(this, "FrontendBucket", {
+      bucketName: "imageintelligence-frontend",
       websiteIndexDocument: "index.html",
     });
 
