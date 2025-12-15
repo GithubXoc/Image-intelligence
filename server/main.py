@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 
 from server.db.mongo import get_mongo_client
+from server.router import history
 
 from .router import analyze
 
@@ -11,6 +12,7 @@ load_dotenv()
 app = FastAPI()
 
 app.include_router(analyze.router)
+app.include_router(history.router)
 
 mongo_client = get_mongo_client()
 

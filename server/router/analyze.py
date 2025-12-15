@@ -3,12 +3,13 @@ from fastapi import APIRouter, File, UploadFile, HTTPException, status
 import os
 import shutil
 import logging
-
 import uuid
 
 from server.db.mongo import MONGO_DB_COLLECTIONS, get_mongo_client
+from server.schemas.analysis_schema import AnalysisSchema
 from server.services.ai_service import gemini_analyze_image_ai
 from server.services.storage import upload_file_to_s3
+from server.utils.utils import get_local_time
 
 router = APIRouter(prefix="/analyze-image")
 
@@ -36,7 +37,8 @@ async def analyze_image(file: UploadFile = File(...)):
         image_bytes = await file.read()
 
         with open(file_location, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            shutil.copyfileobj(file.file, buffer) # upload 0 bytes to s3 for cost saving
+            # buffer.write(image_bytes) 
 
         # Analyze image using AI service
         try:
@@ -46,9 +48,9 @@ async def analyze_image(file: UploadFile = File(...)):
             ai_response = None
         is_analyzed = ai_response is not None
             
-        # Upload to S3
+        # # # Upload to S3
         try:
-            upload_file_to_s3(file_location, f"uploads/{file_uuid}_{file.filename}", file, is_analyzed)
+            image_url = upload_file_to_s3(file_location, f"uploads/{file_uuid}_{file.filename}", file, is_analyzed)
         except Exception as e:
             print(f"Error uploading file to S3: {e}")
             logger.error(f"Error uploading file to S3: {e}")
@@ -56,12 +58,14 @@ async def analyze_image(file: UploadFile = File(...)):
         
         # Post analysis result to MongoDB (to be implemented)
         if is_analyzed:
-            write_analysis_to_db({
-                "file_uuid": file_uuid,
-                "file_name": file.filename,
-                "analysis_result": ai_response
-            })
-
+            analysis_data = AnalysisSchema(
+                file_uuid=file_uuid,
+                file_name=file.filename,
+                image_url=image_url,
+                created_at=get_local_time(),
+                analysis_result=ai_response
+            )
+            write_analysis_to_db(analysis_data.dict())
         return {"message": f"Successfully uploaded {file.filename}", "file_path": file_location}
     except Exception as e:
         raise e
@@ -95,3 +99,7 @@ def write_analysis_to_db(analysis_data: dict):
     except Exception as e:
         logger.error(f"Error writing analysis to DB: {e}")
         raise e
+    
+# https://www.unegui.mn/api/items/
+# https://www.unegui.mn/api/items/9942999/
+# https://www.unegui.mn/api/items/item_info/9942999/
