@@ -11,6 +11,12 @@ export class S3bucket extends Construct {
     const bucket = new s3.Bucket(this, "ImageIntelligence", {
       bucketName: "imageintelligence",
       versioned: true,
+      blockPublicAccess: {
+        blockPublicAcls: false,
+        blockPublicPolicy: false,
+        ignorePublicAcls: false,
+        restrictPublicBuckets: false,
+      },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
